@@ -1,0 +1,16 @@
+{
+  "name": "helloimalemur/rustify-php",
+  "description": "Rust-like Option and Result types for PHP",
+  "type": "library",
+  "require": {
+    "php": ">=8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Rustify\\": "src/"
+    },
+    "files": [
+      "src/functions.php"
+    ]
+  }
+}
