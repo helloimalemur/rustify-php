@@ -91,6 +91,52 @@ $parsed = open_file("config.json")
 ```
 
 
+### Eager vs lazy fallbacks (`orElseValue` vs `orElse`)
+
+There are two ways to provide a fallback for `Option` and `Result`:
+
+- Eager: provide another value right away using `orElseValue(...)`.
+- Lazy: provide a closure that will be called only if needed using `orElse(...)`.
+
+Option example:
+```php
+use function Rustify\{some, none};
+
+$a = some('A');
+$b = some('B');
+
+// Eager: returns $a because it's Some
+$x = $a->orElseValue($b);         // Some('A')
+
+// Lazy: closure will NOT be called because $a is Some
+$y = $a->orElse(fn() => some('C')); // Some('A')
+
+// When None, eager uses provided value; lazy executes the closure
+$n = none();
+$x2 = $n->orElseValue($b);          // Some('B')
+$y2 = $n->orElse(fn() => some('C')); // Some('C')
+```
+
+Result example (note: the lazy version receives the error):
+```php
+use function Rustify\{ok, err};
+
+$r1 = ok(10);
+$r2 = err('network');
+
+// Eager: value provided upfront
+$a = $r1->orElseValue(ok(0)); // Ok(10)
+$b = $r2->orElseValue(ok(0)); // Ok(0)
+
+// Lazy: closure gets the error when called
+$c = $r1->orElse(fn(string $e) => ok(0));     // Ok(10), closure not called
+$d = $r2->orElse(fn(string $e) => ok(strlen($e))); // Ok(7)
+
+// Likewise for unwrap defaults:
+$n = $r2->unwrapOrElse(fn(string $e) => strlen($e)); // 7
+```
+
+
 
 ### Using Option and Result for API validation
 ```php
