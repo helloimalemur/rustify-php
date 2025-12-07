@@ -56,6 +56,19 @@ abstract class Option
     }
 
     /**
+     * Convert to nullable value: Some(T) => T, None => null.
+     *
+     * This is added as a concrete method (not abstract) for backward compatibility
+     * so external subclasses of Option (if any) are not forced to implement it.
+     *
+     * @return T|null
+     */
+    public function toNullable(): mixed
+    {
+        return $this->isSome() ? $this->unwrap() : null;
+    }
+
+    /**
      * Map the inner value if Some, otherwise propagate None.
      *
      * @template U
