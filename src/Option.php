@@ -99,7 +99,7 @@ abstract class Option
      * @param Option<T> $optb
      * @return Option<T>
      */
-    abstract public function or(Option $optb): Option;
+    abstract public function orElseValue(Option $optb): Option;
 
     /**
      * Return self if Some, otherwise result of $f().
@@ -212,7 +212,7 @@ final class Some extends Option
     }
 
     /** @inheritDoc */
-    public function or(Option $optb): Option
+    public function orElseValue(Option $optb): Option
     {
         return $this;
     }
@@ -301,7 +301,7 @@ final class None extends Option
     }
 
     /** @inheritDoc */
-    public function or(Option $optb): Option
+    public function orElseValue(Option $optb): Option
     {
         return $optb;
     }
