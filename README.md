@@ -11,7 +11,7 @@ You can:
 •	wrap exceptions with them
 •	integrate with your Rust backend patterns (structural symmetry)
 
-There’s no restriction — Option and Result behave like normal objects but with Rust semantics.
+Option and Result behave like normal objects but with Rust semantics.
 
 ## Install
 
@@ -47,14 +47,14 @@ $optA = some("value");
 $optB = none();
 
 if ($optA->isSome()) {
-$v = $optA->unwrap();
+    $v = $optA->unwrap();
 }
 ```
 ### Functional transforms:
 ```php
 $nameOpt = some("James")
-->map(fn($name) => strtoupper($name))
-->andThen(fn($name) => strlen($name) > 0 ? some($name) : none());
+    ->map(fn($name) => strtoupper($name))
+    ->andThen(fn($name) => strlen($name) > 0 ? some($name) : none());
 
 $final = $nameOpt->unwrapOr("Unknown");
 
@@ -68,26 +68,26 @@ use function Rustify\{ok, err};
 
 function open_file(string $path): Result
 {
-return is_readable($path)
-? ok(file_get_contents($path))
-: err("File not readable");
+    return is_readable($path)
+        ? ok(file_get_contents($path))
+        : err("File not readable");
 }
 
 $res = open_file("config.json");
 
 if ($res->isOk()) {
-$content = $res->unwrap();
+    $content = $res->unwrap();
 } else {
-$error = $res->unwrapErr();
+    $error = $res->unwrapErr();
 }
 ```
 
 ### Chaining:
 ```php
 $parsed = open_file("config.json")
-->andThen(fn($s) => ok(json_decode($s, true)))
-->map(fn($arr) => $arr["name"] ?? "none")
-->unwrapOr("missing");
+    ->andThen(fn($s) => ok(json_decode($s, true)))
+    ->map(fn($arr) => $arr["name"] ?? "none")
+    ->unwrapOr("missing");
 ```
 
 
@@ -96,11 +96,11 @@ $parsed = open_file("config.json")
 ```php
 function validateUser(array $body): Result
 {
-if (!isset($body["email"]) || !is_string($body["email"])) {
-return err("Invalid email");
+    if (!isset($body["email"]) || !is_string($body["email"])) {
+    return err("Invalid email");
 }
-if (!isset($body["name"]) || !is_string($body["name"])) {
-return err("Invalid name");
+    if (!isset($body["name"]) || !is_string($body["name"])) {
+    return err("Invalid name");
 }
 
     return ok([
@@ -119,13 +119,13 @@ use function Rustify\{if_some, if_ok};
 $maybeToken = some("abc123");
 
 if_some($maybeToken, function ($token) {
-error_log("Token = $token");
+    error_log("Token = $token");
 });
 
 $result = ok(42);
 
 if_ok($result, function ($v) {
-echo "Result: $v";
+    echo "Result: $v";
 });
 
 ```
@@ -138,17 +138,17 @@ use function Rustify\{option_match, result_match};
 $opt = none();
 
 $msg = option_match(
-$opt,
-fn($v) => "Some: $v",
-fn()   => "None"
+    $opt,
+    fn($v) => "Some: $v",
+    fn()   => "None"
 );
 
 $res = err("bad input");
 
 $message = result_match(
-$res,
-fn($v) => "OK: $v",
-fn($e) => "ERR: $e"
+    $res,
+    fn($v) => "OK: $v",
+    fn($e) => "ERR: $e"
 );
 
 ```
@@ -178,13 +178,12 @@ They convey intent, preserve context, and shorten debugging time.
     it prevents hours of debugging
     it’s how you write reliable APIs
 
-This is not “Functional Programming nonsense”, this is industry standard.
-
-•	Swift has Optional<T>
-•	Kotlin has Nullable<T> with smart handling
-•	Rust has Option<T> and Result<T,E>
-•	Haskell, Elm, OCaml all use Maybe/Result
-•	TypeScript uses | undefined but companies implement Option for safety
+### This is not “Functional Programming nonsense”, this is industry standard.
+    Swift has Optional<T>
+    Kotlin has Nullable<T> with smart handling
+    Rust has Option<T> and Result<T,E>
+    Haskell, Elm, OCaml all use Maybe/Result
+    TypeScript uses | undefined but companies implement Option for safety
 
 ### Null introduces silent ambiguity
 
@@ -194,8 +193,8 @@ It could signal an error, missing data, invalid input, or an uninitialized value
 Example:
 ```php
 function findUser(int $id) {
-if ($id === 1) return ['id'=>1, 'name'=>'James'];
-return null;
+    if ($id === 1) return ['id'=>1, 'name'=>'James'];
+    return null;
 }
 ```
 
@@ -217,8 +216,8 @@ null destroys signal clarity.
 code you’ve written a thousand times:
 ```php
 $user = findUser($id);
-if ($user === null) {
-// handle maybe-error maybe-not-error?
+    if ($user === null) {
+    // handle maybe-error maybe-not-error?
 }
 ```
 Your brain has to constantly do
