@@ -200,11 +200,108 @@ $message = result_match(
 ```
 
 
+## Catching and logging errors with Result/Option
+
+You can keep exceptions out of your core flow by returning `Result`/`Option` and logging at the boundary (controller/CLI/job). Here are a few idioms you can mix and match:
+
+### Log errors without changing the value using `ifErr`
+```php
+use Rustify\Result;
+use function Rustify\{ok, err};
+
+function doWork(): Result
+{
+    // ... return ok($value) or err($reason)
+}
+
+$res = doWork();
+
+$res->ifErr(function ($e) {
+    // $e can be a string, array, or an Exception/Throwable you put there
+    error_log('[doWork] failed: ' . (is_string($e) ? $e : (is_object($e) ? $e->getMessage() : json_encode($e))));
+});
+
+// Continue with a default if needed
+$value = $res->unwrapOr('default');
+```
+
+### Transform or annotate the error while logging using `mapErr`
+```php
+$res = doWork()
+    ->mapErr(function ($e) {
+        error_log('[doWork] error: ' . (is_string($e) ? $e : (is_object($e) ? $e->getMessage() : json_encode($e))));
+        // Optionally normalize to a domain error type/value
+        return is_string($e) ? $e : 'internal_error';
+    });
+```
+
+### Recover from an error while logging using `orElse`
+```php
+use function Rustify\ok;
+
+$safe = doWork()
+    ->orElse(function ($e) {
+        error_log('[doWork] recovered: ' . (is_string($e) ? $e : (is_object($e) ? $e->getMessage() : json_encode($e))));
+        return ok('fallback'); // provide a fallback Ok value
+    })
+    ->unwrap(); // safe because we've recovered
+```
+
+### One‑liner logging with defaults using `unwrapOrElse`
+```php
+$value = doWork()->unwrapOrElse(function ($e) {
+    error_log('[doWork] defaulted: ' . (is_string($e) ? $e : (is_object($e) ? $e->getMessage() : json_encode($e))));
+    return 'default';
+});
+```
+
+### Catch exceptions once, convert to `Result`, then log via the patterns above
+```php
+use Rustify\Result;
+use function Rustify\{ok, err};
+
+function parseJsonSafe(string $raw): Result
+{
+    try {
+        $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        return ok($data);
+    } catch (\Throwable $e) {
+        return err($e); // store the Throwable in Err
+    }
+}
+
+$res = parseJsonSafe($input);
+$data = $res->unwrapOrElse(function ($e) {
+    // $e is the Throwable we stored
+    error_log('[parseJsonSafe] ' . $e->getMessage());
+    return [];
+});
+```
+
+### Optional values: log when a value is missing using the `ifNone` pattern
+```php
+use function Rustify\{some, none};
+
+/** @return Rustify\Option */
+function maybeEnv(string $key)
+{
+    $v = getenv($key);
+    return $v === false ? none() : some($v);
+}
+
+$opt = maybeEnv('API_TOKEN');
+$opt->ifNone(fn() => error_log('[env] API_TOKEN is not set'));
+$token = $opt->unwrapOr('');
+```
+- Prefer logging at the application boundary (controllers, handlers, CLI commands) rather than deep inside pure functions. This keeps core code testable and composable.
+- Use `mapErr` when you need to add context as the error bubbles up, `orElse` when you can safely recover with a fallback, and `unwrapOrElse` for concise defaulting with logging.
+
+
 # WHY!?
 
-Null is not a value. It is an absence of information. It carries zero context about why something is missing or what state the system is in.
+Null is not a value. It is an absence of information. It carries zero context about what and why something is, where it came from or what state the system is in.
 
-Option and Result turn absence into structured information.
+Option and Result turn absence into structured flow, explicit alternate paths, recoverable and predictable outcomes.
 They convey intent, preserve context, and shorten debugging time.
 
 ### Option represents an intentional “maybe”:
