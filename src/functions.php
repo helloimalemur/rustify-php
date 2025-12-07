@@ -119,3 +119,32 @@ function result_match(Result $res, callable $onOk, callable $onErr): mixed
     }
     return $onErr($res->unwrapErr());
 }
+
+/**
+ * alternative for Option::orElse (use a precomputed fallback Option).
+ * Returns $opt if it is Some, otherwise returns $fallback.
+ *
+ * @template T
+ * @param Option<T> $opt
+ * @param Option<T> $fallback
+ * @return Option<T>
+ */
+function option_or_else_value(Option $opt, Option $fallback): Option
+{
+    return $opt->orElseValue($fallback);
+}
+
+/**
+ * Eager alternative for Result::orElse (use a precomputed fallback Result).
+ * Returns $res if it is Ok, otherwise returns $fallback.
+ *
+ * @template T
+ * @template E
+ * @param Result<T,E> $res
+ * @param Result<T,E> $fallback
+ * @return Result<T,E>
+ */
+function result_or_else_value(Result $res, Result $fallback): Result
+{
+    return $res->orElseValue($fallback);
+}

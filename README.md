@@ -100,7 +100,7 @@ There are two ways to provide a fallback for `Option` and `Result`:
 
 Option example:
 ```php
-use function Rustify\{some, none};
+use function Rustify\{some, none, option_or_else_value};
 
 $a = some('A');
 $b = some('B');
@@ -115,11 +115,15 @@ $y = $a->orElse(fn() => some('C')); // Some('A')
 $n = none();
 $x2 = $n->orElseValue($b);          // Some('B')
 $y2 = $n->orElse(fn() => some('C')); // Some('C')
+
+// The same using the helper function:
+$x3 = option_or_else_value($a, $b); // Some('A')
+$x4 = option_or_else_value($n, $b); // Some('B')
 ```
 
 Result example (note: the lazy version receives the error):
 ```php
-use function Rustify\{ok, err};
+use function Rustify\{ok, err, result_or_else_value};
 
 $r1 = ok(10);
 $r2 = err('network');
@@ -127,6 +131,10 @@ $r2 = err('network');
 // Eager: value provided upfront
 $a = $r1->orElseValue(ok(0)); // Ok(10)
 $b = $r2->orElseValue(ok(0)); // Ok(0)
+
+// The same using the helper function:
+$a2 = result_or_else_value($r1, ok(0)); // Ok(10)
+$b2 = result_or_else_value($r2, ok(0)); // Ok(0)
 
 // Lazy: closure gets the error when called
 $c = $r1->orElse(fn(string $e) => ok(0));     // Ok(10), closure not called
@@ -237,7 +245,7 @@ $res = doWork()
 
 ### Recover from an error while logging using `orElse`
 ```php
-use function Rustify\ok;
+use function Rustify\{ok};
 
 $safe = doWork()
     ->orElse(function ($e) {
