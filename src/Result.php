@@ -70,17 +70,19 @@ abstract class Result
     abstract public function andThen(callable $f): Result;
 
     /**
-     * Return self if Ok, otherwise $resb.
+     * Return self if Ok, otherwise $resb (eager alternative to {@see Result::orElse}).
      *
      * @param Result<T, E> $resb
      * @return Result<T, E>
      */
-    abstract public function or(Result $resb): Result;
+    abstract public function orElseValue(Result $resb): Result;
 
     /**
-     * Return self if Ok, otherwise result of $f().
+     * Return self if Ok, otherwise result of $f($error).
      *
-     * @param callable():Result<T, E> $f
+     * In the Err variant, the error value (E) is passed to the callback.
+     *
+     * @param callable(E):Result<T, E> $f
      * @return Result<T, E>
      */
     abstract public function orElse(callable $f): Result;
@@ -109,10 +111,12 @@ abstract class Result
     abstract public function unwrapOr(mixed $default): mixed;
 
     /**
-     * Unwrap Ok or compute default via callable.
+     * Unwrap Ok or compute default via callable($error).
+     *
+     * For Err, the error value (E) is passed to the callable and its result is returned.
      *
      * @template U
-     * @param callable():U $default
+     * @param callable(E):U $default
      * @return T|U
      */
     abstract public function unwrapOrElse(callable $default): mixed;
@@ -197,7 +201,7 @@ final class Ok extends Result
     }
 
     /** @inheritDoc */
-    public function or(Result $resb): Result
+    public function orElseValue(Result $resb): Result
     {
         return $this;
     }
@@ -304,7 +308,7 @@ final class Err extends Result
     }
 
     /** @inheritDoc */
-    public function or(Result $resb): Result
+    public function orElseValue(Result $resb): Result
     {
         return $resb;
     }
@@ -312,7 +316,7 @@ final class Err extends Result
     /** @inheritDoc */
     public function orElse(callable $f): Result
     {
-        $res = $f();
+        $res = $f($this->error);
         if (!$res instanceof Result) {
             throw new UnwrapException('orElse callback must return a Result');
         }
@@ -340,7 +344,7 @@ final class Err extends Result
     /** @inheritDoc */
     public function unwrapOrElse(callable $default): mixed
     {
-        return $default();
+        return $default($this->error);
     }
 
     /** @inheritDoc */
